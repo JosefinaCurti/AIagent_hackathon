@@ -5,102 +5,65 @@
 ## Original Documentation
 
 ## Project/Process Overview
-This document outlines a multi-agent system designed to streamline the creation and publication of workflow diagrams. The system's primary goal is to assist users in efficiently documenting various types of processes by generating a structured Markdown description and a corresponding flowchart image, which are then merged into a comprehensive document and posted to a specified GitHub repository. The `interactive_process_creator_agent` orchestrates the entire process, leveraging specialized sub-agents to handle documentation, diagramming, merging, and publishing tasks.
+This multi-agent system is designed to streamline the creation of workflow diagrams from user descriptions, automating the process from documentation generation to visual representation and final publication. The system leverages a central orchestrator to delegate tasks to specialized sub-agents, ensuring efficiency, accuracy, and compliance with documentation standards. This approach aims to reduce manual effort and accelerate the delivery of clear, structured workflow documentation.
 
 ---
 
 ## Structure and Key Components
-The core of this system is the `interactive_process_creator_agent`, which acts as the central orchestrator, managing user interactions and delegating tasks to a team of specialized sub-agents.
+The system operates on a hierarchical multi-agent architecture, with a primary orchestrator managing a team of specialized sub-agents.
 
 ### Specialized Roles and Units
 
-#### interactive_process_creator_agent
-*   **Core Function:** Serves as the central orchestrator and user interface for the entire system.
-*   **Responsibilities:**
-    *   Receives initial workflow diagram creation requests from the user, including a short description of the process structure and goals.
-    *   Delegates tasks to specialized sub-agents (e.g., `process_documentation_architect`, `diagramer_agent`, `wrapper_agent`, `posting_agent`).
-    *   Presents the final integrated document (Markdown + PNG) to the user for feedback and approval.
-    *   Prompts the user for the target GitHub directory upon approval.
-    *   Manages the overall workflow and ensures seamless execution across agents.
-*   **Decision Points:** Decides which sub-agent to delegate to based on the current stage of the workflow; determines when to present the final document to the user and await approval.
+*   **interactive_process_creator_agent (Orchestrator)**:
+    *   **Core Function:** Serves as the central orchestrator, receiving user requests, delegating tasks to specialized sub-agents, and managing the overall workflow from initiation to completion.
+    *   **Responsibilities:** Interprets user requests for workflow diagrams, assigns documentation and diagramming tasks, coordinates the merging of outputs, facilitates user review, and initiates the publication process.
+    *   **Decision Points:** Decides which sub-agents to activate, when to proceed to the next stage of the workflow, and when to request user feedback.
 
-#### process_documentation_architect
-*   **Core Function:** Specialized in generating structured Markdown descriptions of workflow diagrams.
-*   **Responsibilities:**
-    *   Receives a user's short process draft from the `interactive_process_creator_agent`.
-    *   Utilizes the `google_search` tool to research and define specialized terms, technical standards, or common organizational best practices related to the described process.
-    *   Employs the `robust_writing_agent` (consisting of `process_writing_agent` and `ProcessValidatorChecker`) to draft, refine, and validate the process description in Markdown format.
-*   **Decision Points:** Determines when the Markdown description is complete and validated according to the process structure and goals.
+*   **process_documentation_architect**:
+    *   **Core Function:** Responsible for transforming a user's short process description into a structured Markdown workflow document.
+    *   **Responsibilities:** Analyzes process requirements, drafts the textual description of the workflow, and ensures the documentation is clear, accurate, and compliant.
+    *   **Decision Points:** Determines the structure and content of the Markdown, and relies on its sub-agents for robust writing and validation.
+    *   **Sub-agents:**
+        *   **robust_writing_agent:** Focuses on generating well-structured and clear process descriptions.
+            *   **process_writing_agent:** Drafts the initial Markdown content.
+        *   **ProcessValidatorChecker (Loop agent):** Reviews and validates the drafted Markdown against the initial requirements and best practices, iterating until the document is robust and accurate.
 
-##### robust_writing_agent
-*   **Core Function:** Ensures high-quality and validated process documentation.
-*   **Sub-agents:**
-    *   **process_writing_agent:** Drafts the initial Markdown content based on the input and research.
-    *   **ProcessValidatorChecker (Loop agent):** Validates the drafted Markdown description against requirements, ensuring accuracy, completeness, and adherence to the specified structure. It can request revisions from the `process_writing_agent` until validation criteria are met.
+*   **diagramer_agent**:
+    *   **Core Function:** Converts the Markdown workflow description into a visual flowchart (PNG image).
+    *   **Responsibilities:** Generates visual representations of the process, ensuring the diagram accurately reflects the documented steps and components.
+    *   **Decision Points:** Decides on the layout and visual elements of the flowchart, and relies on its sub-agents for robust diagramming and validation.
+    *   **Sub-agents:**
+        *   **robust_diagramer_agent:** Focuses on creating high-quality, readable diagrams.
+            *   **diagramer_agent:** Renders the flowchart image.
+        *   **ProcessValidatorChecker (Loop agent):** Validates that the generated flowchart accurately matches the Markdown description, ensuring consistency between text and visual representation.
 
-#### diagramer_agent
-*   **Core Function:** Converts the Markdown workflow description into a visual flowchart diagram (PNG format).
-*   **Responsibilities:**
-    *   Receives the Markdown file generated by the `process_documentation_architect`.
-    *   Utilizes the `google_search` tool for any necessary diagramming standards, tools, or best practices.
-    *   Employs the `robust_diagramer_agent` (consisting of a `diagramer_agent` and `ProcessValidatorChecker`) to create and validate the flowchart.
-*   **Decision Points:** Decides when the generated PNG diagram accurately represents the process description.
+*   **wrapper_agent**:
+    *   **Core Function:** Merges the generated Markdown documentation and the PNG flowchart into a single, cohesive output document.
+    *   **Responsibilities:** Combines the textual and visual elements into a final presentation format, ready for user review.
 
-##### robust_diagramer_agent
-*   **Core Function:** Ensures high-quality and validated flowchart generation.
-*   **Sub-agents:**
-    *   **diagramer_agent:** Generates the flowchart image (PNG) based on the Markdown input.
-    *   **ProcessValidatorChecker (Loop agent):** Validates the generated PNG chart against the input Markdown description, ensuring the visual representation accurately matches the textual process. It can request revisions from the `diagramer_agent` until validation criteria are met.
-
-#### wrapper_agent
-*   **Core Function:** Integrates the textual and visual outputs into a single, cohesive document.
-*   **Responsibilities:**
-    *   Receives the Markdown workflow description from the `process_documentation_architect`.
-    *   Receives the PNG flowchart image from the `diagramer_agent`.
-    *   Creates a final document that merges both the Markdown description and the PNG image (e.g., embedding the image within the Markdown or a composite PDF/HTML).
-*   **Decision Points:** None, its task is purely transformational.
-
-#### posting_agent
-*   **Core Function:** Handles the publication of the final approved document to a specified GitHub repository.
-*   **Responsibilities:**
-    *   Receives the final approved document and the target GitHub directory from the `interactive_process_creator_agent`.
-    *   Uses the `github MCP tool` to post the document to the designated repository.
-*   **Decision Points:** None, its task is purely executive once approval and location are provided.
+*   **posting_agent**:
+    *   **Core Function:** Handles the publication of the approved workflow document to the specified GitHub directory.
+    *   **Responsibilities:** Interfaces with GitHub to commit and push the final documentation.
 
 ### Essential Tools and Resources
-*   **`google_search` tool:** Used by `process_documentation_architect` and `diagramer_agent` for research, standard definitions, and best practices.
-*   **`github MCP tool`:** Utilized by the `posting_agent` for publishing the final document to a GitHub repository.
-*   **Markdown Format:** Standard output format for textual documentation.
-*   **PNG Image Format:** Standard output format for workflow diagrams.
+
+*   **google_search tool**: Utilized by both `process_documentation_architect` and `diagramer_agent` for researching specialized terms, technical standards, and best practices to enhance documentation and diagram accuracy.
+*   **github MCP tool**: Employed by the `posting_agent` to interact with GitHub's platform for repository management and automated workflow execution, enabling direct publication of the final document.
+*   **Markdown files**: Intermediate and final output format for textual documentation.
+*   **PNG images**: Output format for graphical workflow diagrams.
 
 ---
 
 ## Workflow
 
-1.  **Request Initiation (User to interactive_process_creator_agent):**
-    *   A user submits a request to the `interactive_process_creator_agent` with a short description of the desired workflow diagram, including its structure and goals.
-
-2.  **Documentation Generation (interactive_process_creator_agent to process_documentation_architect):**
-    *   The `interactive_process_creator_agent` delegates the task of creating the textual documentation to the `process_documentation_architect`.
-    *   The `process_documentation_architect` uses `google_search` for context and employs its `robust_writing_agent` (which includes `process_writing_agent` and `ProcessValidatorChecker`) to generate a validated Markdown file describing the workflow.
-
-3.  **Diagram Creation (interactive_process_creator_agent to diagramer_agent):**
-    *   Once the Markdown is ready, the `interactive_process_creator_agent` delegates to the `diagramer_agent`.
-    *   The `diagramer_agent` receives the Markdown, uses `google_search` for diagramming insights, and utilizes its `robust_diagramer_agent` (including `diagramer_agent` and `ProcessValidatorChecker`) to produce a validated PNG flowchart image corresponding to the Markdown description.
-
-4.  **Document Integration (interactive_process_creator_agent to wrapper_agent):**
-    *   The `interactive_process_creator_agent` sends both the generated Markdown and the PNG image to the `wrapper_agent`.
-    *   The `wrapper_agent` merges these two components into a single, comprehensive document.
-
-5.  **User Review and Approval (interactive_process_creator_agent to User):**
-    *   The `interactive_process_creator_agent` presents the final integrated document to the user for review and feedback.
-    *   Upon user approval, the `interactive_process_creator_agent` prompts the user for the specific GitHub directory where the document should be posted.
-
-6.  **Publication (interactive_process_creator_agent to posting_agent):**
-    *   With user approval and the GitHub directory provided, the `interactive_process_creator_agent` delegates the final step to the `posting_agent`.
-    *   The `posting_agent` uses the `github MCP tool` to publish the document to the specified GitHub repository.
+1.  **Request Initiation**: The user sends a request to the `interactive_process_creator_agent` with a brief description outlining the desired workflow diagram's structure and goals.
+2.  **Documentation Creation**: The `interactive_process_creator_agent` delegates the task to the `process_documentation_architect`. This agent, using its `robust_writing_agent` and `ProcessValidatorChecker`, drafts a detailed Markdown file describing the workflow. `google_search` may be used for research during this step.
+3.  **Diagram Generation**: Concurrently, or upon completion of the Markdown, the `interactive_process_creator_agent` delegates to the `diagramer_agent`. This agent, using its `robust_diagramer_agent` and `ProcessValidatorChecker`, generates a PNG flowchart based on the Markdown description. `google_search` may be used for research to ensure accurate visual representation.
+4.  **Final Document Assembly**: The `interactive_process_creator_agent` then engages the `wrapper_agent` to combine the validated Markdown description and the generated PNG diagram into a single, comprehensive document.
+5.  **User Review & Approval**: The `interactive_process_creator_agent` presents the complete document to the user, gathering feedback and requesting the target GitHub directory for publication.
+6.  **Publication to GitHub**: Upon user approval, the `interactive_process_creator_agent` activates the `posting_agent`, which uses the `github MCP` tool to publish the final document to the designated GitHub repository.
 
 ---
 
 ## Value Statement
-This multi-agent system significantly enhances the efficiency and consistency of workflow diagram documentation. By automating the generation of both textual descriptions and visual flowcharts, it reduces manual effort, minimizes errors, and ensures adherence to predefined documentation standards. The structured, step-by-step approach, coupled with robust validation at each stage, guarantees high-quality outputs. The final integration and automated GitHub posting streamline the publishing process, making documentation readily accessible and maintainable, ultimately fostering better understanding and collaboration within teams.
+This multi-agent system significantly enhances the efficiency and quality of workflow documentation. By automating the generation of both textual and visual representations and integrating validation loops, it ensures accuracy and consistency. The system reduces manual effort, accelerates the documentation process, and provides a standardized, compliant output, ultimately fostering clearer communication and better understanding of organizational or system processes. Future improvements could include expanding the types of diagram formats supported or integrating with other version control systems.
